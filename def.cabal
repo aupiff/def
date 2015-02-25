@@ -16,7 +16,7 @@ cabal-version:       >=1.10
 
 executable def
   main-is:             Main.hs
-  build-depends:       base >=4.6 && <4.8,
+  build-depends:       base >=4.6,
                        bytestring,
                        HTTP,
                        http-conduit,
@@ -25,10 +25,6 @@ executable def
                        aeson,
                        lens,
                        lens-aeson,
-                       pipes,
-                       pipes-http,
-                       pipes-attoparsec,
-                       pipes-bytestring,
                        html-conduit,
                        xml-conduit
   hs-source-dirs:      src
