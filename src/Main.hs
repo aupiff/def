@@ -26,8 +26,7 @@ baseUrl = "http://en.wiktionary.org/w/api.php?action=parse&format=xml&prop=text|
 -- <h2>
 -- </h2>
 
-isFrench :: Cursor -> Bool
-isFrench = undefined
+searchLanguage = "French"
 
 findTextNode :: Cursor -> [T.Text]
 findTextNode = TXC.element "text" >=> TXC.child >=> TXC.content
@@ -48,7 +47,8 @@ wikiContentCursorFor cursor =
           textNodeE = maybeToEither noTextException textNodeM
 
 definitionContentCursor :: Cursor -> [Cursor]
-definitionContentCursor cursor = cursor $.// TXC.element "h2"
+definitionContentCursor cursor = cursor $.// TXC.attributeIs "id" searchLanguage
+                                        >=> TXC.parent
 
 main :: IO ()
 main = do
