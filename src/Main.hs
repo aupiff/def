@@ -12,6 +12,7 @@ import Control.Exception
 import qualified Data.Maybe as M
 import Data.Default as DD
 import Control.Applicative ((<$>))
+import Debug.Trace
 
 prompt :: IO String
 prompt = do putStrLn "Enter a word: "
@@ -58,13 +59,13 @@ definitionContentCursor cursor = takeWhile notH2 afterCursors
                                 >=> TXC.followingSibling
           notH2 = not . cursorHeadElEquals "h2"
 
-renderDefinitionContent :: [Cursor] -> String
-renderDefinitionContent = undefined
+definitionList :: [Cursor] -> [String]
+definitionList = map formatDefinition . filter (cursorHeadElEquals "li") . concatMap TXC.child . filter (cursorHeadElEquals "ol")
 
-definitionList :: [Cursor] -> [Cursor]
-definitionList = filter $ cursorHeadElEquals "ol"
+formatDefinition :: Cursor -> String
+formatDefinition cursor = T.unpack . T.concat $ cursor $// TXC.content
 
-getSections :: [Cursor] -> [(String, [Cursor])]
+getSections :: [Cursor] -> [(String, [String])]
 getSections [] = []
 getSections xs = let notH3 = not . cursorHeadElEquals "h3"
                      -- TODO this must be made safe
@@ -72,7 +73,8 @@ getSections xs = let notH3 = not . cursorHeadElEquals "h3"
                      title = getSectionTitle h3el
                      (part, rest) = span notH3 h3start
                      definitions = definitionList part
-                 in  if null definitions then getSections rest else (title, definitions) : getSections rest
+                 in  if null definitions then getSections rest
+                                         else (title, definitions) : getSections rest
 
 getSectionTitle :: Cursor -> String
 getSectionTitle cursor = let headline = cursor $// TXC.attributeIs "class" "mw-headline"
