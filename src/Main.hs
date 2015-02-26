@@ -14,7 +14,7 @@ import Data.Default as DD
 import Control.Applicative ((<$>))
 
 prompt :: IO String
-prompt = do putStr "Enter a word: "
+prompt = do putStrLn "Enter a word: "
             getLine
 
 baseUrl = "http://en.wiktionary.org/w/api.php?action=parse&format=xml&prop=text|revid|displaytitle&callback=?&page="
@@ -62,12 +62,13 @@ definitionContentCursor cursor = takeWhile notH2 afterCursors
                                 >=> TXC.followingSibling
           notH2 cur = not $ cursorHeadElEquals cur "h2"
 
-renderDefinitionContent :: [Cursors] -> String
+renderDefinitionContent :: [Cursor] -> String
 renderDefinitionContent = undefined
 
 main :: IO ()
 main = do
-    let word = N.urlEncode "gorge"
+    userWord <- prompt
+    let word = N.urlEncode userWord
     cursorE <- cursorFor $ baseUrl ++ word
     let cc = do cursor <- cursorE
                 contentCursor <- wikiContentCursorFor cursor
