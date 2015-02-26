@@ -43,12 +43,19 @@ wikiContentCursorFor cursor =
     fmap TXC.fromDocument . TX.parseText DD.def . TL.fromStrict =<< textNodeE
     where noTextException =  toException $ IndexOutOfBounds "no text element found"
           wrapRoot x = T.append (T.pack "<root>") $ T.append x (T.pack "</root>")
-          textNodeM = fmap wrapRoot . M.listToMaybe $ cursor $.// findTextNode
+          textNodeM = fmap wrapRoot . M.listToMaybe $ cursor $// findTextNode
           textNodeE = maybeToEither noTextException textNodeM
 
-definitionContentCursor :: Cursor -> [Cursor]
-definitionContentCursor cursor = cursor $.// TXC.attributeIs "id" searchLanguage
-                                        >=> TXC.parent
+isntNewlineContentNode :: Node -> Bool
+isntNewlineContentNode (NodeContent txt) = txt /= T.pack "\n"
+isntNewlineContentNode _                 = True
+
+--TXC.checkNode isntNewlineContentNode
+
+definitionContentCursor :: Cursor -> Maybe Cursor
+definitionContentCursor cursor = startCursorM
+    where startCursorM = M.listToMaybe $ cursor $// TXC.attributeIs "id" searchLanguage
+                                                >=> TXC.parent
 
 main :: IO ()
 main = do
