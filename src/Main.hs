@@ -28,8 +28,9 @@ baseUrl = "http://en.wiktionary.org/w/api.php?action=parse&format=xml&prop=text|
 
 searchLanguage = "French"
 
-findTextNode :: Cursor -> [T.Text]
-findTextNode = TXC.element "text" >=> TXC.child >=> TXC.content
+findTextNode :: Cursor -> Maybe T.Text
+findTextNode cursor = M.listToMaybe $ cursor $// textContentAxis
+        where textContentAxis = TXC.element "text" >=> TXC.child >=> TXC.content
 
 -- TODO it'd be nice to have simpleHttp return an Either type
 cursorFor :: String -> IO (Either SomeException Cursor)
@@ -39,23 +40,30 @@ cursorFor url = do page <- NHC.simpleHttp url
 maybeToEither = flip maybe Right . Left
 
 wikiContentCursorFor :: Cursor -> Either SomeException Cursor
-wikiContentCursorFor cursor =
-    fmap TXC.fromDocument . TX.parseText DD.def . TL.fromStrict =<< textNodeE
+wikiContentCursorFor cursor = fmap TXC.fromDocument documentE
     where noTextException =  toException $ IndexOutOfBounds "no text element found"
           wrapRoot x = T.append (T.pack "<root>") $ T.append x (T.pack "</root>")
-          textNodeM = fmap wrapRoot . M.listToMaybe $ cursor $// findTextNode
+          textNodeM = fmap wrapRoot $ findTextNode cursor
           textNodeE = maybeToEither noTextException textNodeM
+          documentE = TX.parseText DD.def . TL.fromStrict =<< textNodeE
 
---cursorHeadElEquals :: Cursor -> String -> Bool
---cursorHeadElEquals cursor name = True
---    where node = node cursor
+cursorHeadElEquals :: Cursor -> String -> Bool
+cursorHeadElEquals cursor name = name == elName
+    where node = TXC.node cursor
+          elName :: String
+          elName = case node of
+                       NodeElement el -> T.unpack . nameLocalName $ elementName el
+                       otherwise -> ""
 
 definitionContentCursor :: Cursor -> [Cursor]
-definitionContentCursor cursor = afterCursors
+definitionContentCursor cursor = takeWhile notH2 afterCursors
     where afterCursors = cursor $// TXC.attributeIs "id" searchLanguage
                                 >=> TXC.parent
                                 >=> TXC.followingSibling
-          --notH2 cur = not $ cursorHeadElEquals cur "h2"
+          notH2 cur = not $ cursorHeadElEquals cur "h2"
+
+renderDefinitionContent :: [Cursors] -> String
+renderDefinitionContent = undefined
 
 main :: IO ()
 main = do
