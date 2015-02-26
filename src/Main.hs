@@ -49,7 +49,7 @@ cursorHeadElEquals name cursor = name == elName
           elName :: String
           elName = case node of
                        NodeElement el -> T.unpack . nameLocalName $ elementName el
-                       _ -> ""
+                       _              -> ""
 
 definitionContentCursor :: Cursor -> [Cursor]
 definitionContentCursor cursor = takeWhile notH2 afterCursors
@@ -64,11 +64,21 @@ renderDefinitionContent = undefined
 definitionList :: [Cursor] -> [Cursor]
 definitionList = filter $ cursorHeadElEquals "ol"
 
-getSections :: [Cursor] -> [[Cursor]]
+getSections :: [Cursor] -> [(String, [Cursor])]
 getSections [] = []
-getSections xs = let notH3 = not . cursorHeadElEquals "h2"
-                     (part, rest) = span notH3 xs
-                 in  part : getSections rest
+getSections xs = let notH3 = not . cursorHeadElEquals "h3"
+                     -- TODO this must be made safe
+                     (h3el:h3start) = dropWhile notH3 xs
+                     title = getSectionTitle h3el
+                     (part, rest) = span notH3 h3start
+                     definitions = definitionList part
+                 in  if null definitions then getSections rest else (title, definitions) : getSections rest
+
+getSectionTitle :: Cursor -> String
+getSectionTitle cursor = let headline = cursor $// TXC.attributeIs "class" "mw-headline"
+                                               >=> TXC.child
+                                               >=> TXC.content
+                         in show headline
 
 main :: IO ()
 main = do
@@ -78,6 +88,6 @@ main = do
     let cc = do cursor <- cursorE
                 contentCursor <- wikiContentCursorFor cursor
                 let defContent = definitionContentCursor contentCursor
-                let wordPartSections = map definitionList $ getSections defContent
+                let wordPartSections = getSections defContent
                 return wordPartSections
     print cc
