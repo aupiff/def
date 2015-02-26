@@ -46,16 +46,11 @@ wikiContentCursorFor cursor =
           textNodeM = fmap wrapRoot . M.listToMaybe $ cursor $// findTextNode
           textNodeE = maybeToEither noTextException textNodeM
 
-isntNewlineContentNode :: Node -> Bool
-isntNewlineContentNode (NodeContent txt) = txt /= T.pack "\n"
-isntNewlineContentNode _                 = True
-
---TXC.checkNode isntNewlineContentNode
-
-definitionContentCursor :: Cursor -> Maybe Cursor
+definitionContentCursor :: Cursor -> [Cursor]
 definitionContentCursor cursor = startCursorM
-    where startCursorM = M.listToMaybe $ cursor $// TXC.attributeIs "id" searchLanguage
-                                                >=> TXC.parent
+    where startCursorM = cursor $// TXC.attributeIs "id" searchLanguage
+                                >=> TXC.parent
+                                >=> TXC.followingSibling
 
 main :: IO ()
 main = do
