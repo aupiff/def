@@ -47,8 +47,8 @@ wikiContentCursorFor cursor = fmap TXC.fromDocument documentE
           textNodeE = maybeToEither noTextException textNodeM
           documentE = TX.parseText DD.def . TL.fromStrict =<< textNodeE
 
-cursorHeadElEquals :: Cursor -> String -> Bool
-cursorHeadElEquals cursor name = name == elName
+cursorHeadElEquals :: String -> Cursor -> Bool
+cursorHeadElEquals name cursor = name == elName
     where node = TXC.node cursor
           elName :: String
           elName = case node of
@@ -60,10 +60,13 @@ definitionContentCursor cursor = takeWhile notH2 afterCursors
     where afterCursors = cursor $// TXC.attributeIs "id" searchLanguage
                                 >=> TXC.parent
                                 >=> TXC.followingSibling
-          notH2 cur = not $ cursorHeadElEquals cur "h2"
+          notH2 = not . cursorHeadElEquals "h2"
 
 renderDefinitionContent :: [Cursor] -> String
 renderDefinitionContent = undefined
+
+definitionList :: [Cursor] -> [Cursor]
+definitionList = filter $ cursorHeadElEquals "ol"
 
 main :: IO ()
 main = do
@@ -72,5 +75,6 @@ main = do
     cursorE <- cursorFor $ baseUrl ++ word
     let cc = do cursor <- cursorE
                 contentCursor <- wikiContentCursorFor cursor
-                return $ definitionContentCursor contentCursor
+                let defContent = definitionContentCursor contentCursor
+                return $ definitionList defContent
     print cc
