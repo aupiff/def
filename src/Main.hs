@@ -12,7 +12,6 @@ import Control.Exception
 import qualified Data.Maybe as M
 import Data.Default as DD
 import Control.Applicative ((<$>))
-import Debug.Trace
 
 prompt :: IO String
 prompt = do putStrLn "Enter a word: "
@@ -65,7 +64,7 @@ definitionList = map formatDefinition . filter (cursorHeadElEquals "li") . conca
 formatDefinition :: Cursor -> String
 formatDefinition cursor = T.unpack . T.concat $ cursor $// TXC.content
 
-getSections :: [Cursor] -> [(String, [String])]
+getSections :: [Cursor] -> [(Maybe String, [String])]
 getSections [] = []
 getSections xs = let notH3 = not . cursorHeadElEquals "h3"
                      -- TODO this must be made safe
@@ -76,11 +75,11 @@ getSections xs = let notH3 = not . cursorHeadElEquals "h3"
                  in  if null definitions then getSections rest
                                          else (title, definitions) : getSections rest
 
-getSectionTitle :: Cursor -> String
+getSectionTitle :: Cursor -> Maybe String
 getSectionTitle cursor = let headline = cursor $// TXC.attributeIs "class" "mw-headline"
                                                >=> TXC.child
                                                >=> TXC.content
-                         in show headline
+                         in T.unpack <$> M.listToMaybe headline
 
 main :: IO ()
 main = do
