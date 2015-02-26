@@ -44,14 +44,18 @@ maybeToEither = flip maybe Right . Left
 wikiContentCursorFor :: Cursor -> Either SomeException Cursor
 wikiContentCursorFor cursor = fmap fromDocument . parseText def . TL.fromStrict =<< textNodeE
                               where noTextException =  toException $ IndexOutOfBounds "no text element found"
-                                    wrapRoot x = T.append (T.pack "<root>") (T.append x (T.pack "</root>"))
+                                    wrapRoot x = T.append (T.pack "<root>") $ T.append x (T.pack "</root>")
                                     textNodeM = fmap wrapRoot . listToMaybe $ cursor $.// findTextNode
                                     textNodeE = maybeToEither noTextException textNodeM
 
+definitionContentCursor :: Cursor -> [Cursor]
+definitionContentCursor cursor = cursor $.// element "h2"
+
 main :: IO ()
 main = do
-    let word = N.urlEncode "obnubiler"
+    let word = N.urlEncode "gorge"
     cursorE <- cursorFor $ baseUrl ++ word
     let cc = do cursor <- cursorE
-                wikiContentCursorFor cursor
+                contentCursor <- wikiContentCursorFor cursor
+                return $ definitionContentCursor contentCursor
     print cc
