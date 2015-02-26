@@ -6,7 +6,7 @@ import qualified Network.HTTP.Conduit as NHC
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import Text.XML as TX
-import Text.XML.Cursor (Cursor, ($//), ($.//), (&|), (&.//), (&//), (&/), (>=>))
+import Text.XML.Cursor (Cursor, ($//), (>=>))
 import qualified Text.XML.Cursor as TXC
 import Control.Exception
 import qualified Data.Maybe as M
@@ -17,15 +17,10 @@ prompt :: IO String
 prompt = do putStrLn "Enter a word: "
             getLine
 
+baseUrl :: String
 baseUrl = "http://en.wiktionary.org/w/api.php?action=parse&format=xml&prop=text|revid|displaytitle&callback=?&page="
 
--- <h2>
---      <span class="mw-headline" id="French">French</span>
--- </h2>
--- ...
--- <h2>
--- </h2>
-
+searchLanguage :: T.Text
 searchLanguage = "French"
 
 findTextNode :: Cursor -> Maybe T.Text
@@ -37,13 +32,14 @@ cursorFor :: String -> IO (Either SomeException Cursor)
 cursorFor url = do page <- NHC.simpleHttp url
                    return $ TXC.fromDocument <$> TX.parseLBS DD.def page
 
+maybeToEither :: forall a a1. a1 -> Maybe a -> Either a1 a
 maybeToEither = flip maybe Right . Left
 
 wikiContentCursorFor :: Cursor -> Either SomeException Cursor
 wikiContentCursorFor cursor = fmap TXC.fromDocument documentE
     where noTextException =  toException $ IndexOutOfBounds "no text element found"
           wrapRoot x = T.append (T.pack "<root>") $ T.append x (T.pack "</root>")
-          textNodeM = fmap wrapRoot $ findTextNode cursor
+          textNodeM = wrapRoot <$> findTextNode cursor
           textNodeE = maybeToEither noTextException textNodeM
           documentE = TX.parseText DD.def . TL.fromStrict =<< textNodeE
 
@@ -53,7 +49,7 @@ cursorHeadElEquals name cursor = name == elName
           elName :: String
           elName = case node of
                        NodeElement el -> T.unpack . nameLocalName $ elementName el
-                       otherwise -> ""
+                       _ -> ""
 
 definitionContentCursor :: Cursor -> [Cursor]
 definitionContentCursor cursor = takeWhile notH2 afterCursors
@@ -68,6 +64,12 @@ renderDefinitionContent = undefined
 definitionList :: [Cursor] -> [Cursor]
 definitionList = filter $ cursorHeadElEquals "ol"
 
+getSections :: [Cursor] -> [[Cursor]]
+getSections [] = []
+getSections xs = let notH3 = not . cursorHeadElEquals "h2"
+                     (part, rest) = span notH3 xs
+                 in  part : getSections rest
+
 main :: IO ()
 main = do
     userWord <- prompt
@@ -76,5 +78,6 @@ main = do
     let cc = do cursor <- cursorE
                 contentCursor <- wikiContentCursorFor cursor
                 let defContent = definitionContentCursor contentCursor
-                return $ definitionList defContent
+                let wordPartSections = map definitionList $ getSections defContent
+                return wordPartSections
     print cc
