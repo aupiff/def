@@ -4,7 +4,7 @@
 import qualified Network.HTTP.Base as N
 import Network.HTTP.Conduit (simpleHttp)
 import qualified Data.Text as T
-import Data.Text.Lazy (fromStrict)
+import qualified Data.Text.Lazy as TL
 import Text.XML
 import Data.Text.Encoding
 import Text.XML.Cursor (Cursor, attribute, attributeIs, content, laxElement, element, fromDocument, child,
@@ -42,14 +42,15 @@ cursorFor url = do
 maybeToEither = flip maybe Right . Left
 
 wikiContentCursorFor :: Cursor -> Either SomeException Cursor
-wikiContentCursorFor cursor = fmap fromDocument . parseText def . fromStrict =<< textNodeE
+wikiContentCursorFor cursor = fmap fromDocument . parseText def . TL.fromStrict =<< textNodeE
                               where noTextException =  toException $ IndexOutOfBounds "no text element found"
-                                    textNodeM = listToMaybe $ cursor $.// findTextNode
+                                    wrapRoot x = T.append (T.pack "<root>") (T.append x (T.pack "</root>"))
+                                    textNodeM = fmap wrapRoot . listToMaybe $ cursor $.// findTextNode
                                     textNodeE = maybeToEither noTextException textNodeM
 
 main :: IO ()
 main = do
-    let word = N.urlEncode "gorge"
+    let word = N.urlEncode "obnubiler"
     cursorE <- cursorFor $ baseUrl ++ word
     let cc = do cursor <- cursorE
                 wikiContentCursorFor cursor
