@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ExistentialQuantification #-}
 
+import qualified Data.Text.IO as TI
 import qualified Network.HTTP.Base as N
 import qualified Network.HTTP.Conduit as NHC
 import qualified Data.Text as T
@@ -14,13 +15,27 @@ import qualified Data.Map as MP
 import Data.Default as DD
 import Control.Applicative ((<$>))
 
+data Definition = Definition
+                  { sourceLang :: Language
+                  , definitionLang :: Language
+                  , partOfSpeechList :: [(T.Text, [T.Text])]
+                  }
+
+showPartOfSpeech :: (T.Text, [T.Text]) -> IO ()
+showPartOfSpeech (pos, ds) = do TI.putStrLn pos
+                                mapM_ TI.putStrLn ds
+
+showDefinition :: Definition -> IO ()
+showDefinition def = let ps = partOfSpeechList def
+                     in mapM_ showPartOfSpeech ps
+
 data Language = French
               | English
               | Spanish
               | Russian
               | Arabic
               | German
-              | Mandarin deriving (Ord, Eq)
+              | Mandarin deriving (Ord, Eq, Show)
 
 langCode :: Language -> String
 langCode French = "fr"
@@ -35,10 +50,10 @@ baseUrl :: String
 baseUrl = "http://" ++ langCode destinationLang ++ ".wiktionary.org/w/api.php?action=parse&format=xml&prop=text|revid|displaytitle&callback=?&page="
 
 lookupLang :: Language
-lookupLang = Russian
+lookupLang = French
 
 destinationLang :: Language
-destinationLang = Russian
+destinationLang = English
 
 languageHeading :: T.Text
 languageHeading = MP.findWithDefault "English" (lookupLang, destinationLang) langDict
@@ -116,7 +131,7 @@ getSectionTitle cursor = let headline = cursor $// TXC.attributeIs "class" "mw-h
                          in T.unpack <$> M.listToMaybe headline
 
 prompt :: IO String
-prompt = do putStrLn "Enter a word: "
+prompt = do TI.putStrLn "Enter a word: "
             getLine
 
 main :: IO ()
