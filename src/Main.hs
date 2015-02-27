@@ -14,12 +14,9 @@ import qualified Data.Map as MP
 import Data.Default as DD
 import Control.Applicative ((<$>))
 
-prompt :: IO String
-prompt = do putStrLn "Enter a word: "
-            getLine
-
 data Language = French
               | English
+              | Spanish
               | Russian
               | Arabic
               | German
@@ -28,6 +25,7 @@ data Language = French
 langCode :: Language -> String
 langCode French = "fr"
 langCode English = "en"
+langCode Spanish = "en"
 langCode Russian = "ru"
 langCode Arabic = "ar"
 langCode German = "de"
@@ -36,17 +34,21 @@ langCode Mandarin = "zh"
 baseUrl :: String
 baseUrl = "http://" ++ langCode destinationLang ++ ".wiktionary.org/w/api.php?action=parse&format=xml&prop=text|revid|displaytitle&callback=?&page="
 
-lookupLang = French
+lookupLang :: Language
+lookupLang = Spanish
+
+destinationLang :: Language
 destinationLang = English
 
 languageHeading :: T.Text
 languageHeading = MP.findWithDefault "English" (lookupLang, destinationLang) langDict
 
 langDict :: MP.Map (Language, Language) T.Text
-langDict = MP.fromList [ ((French, French), "Français")
+langDict = MP.fromList [ ((French, French), "Fran.C3.A7ais") -- why does wiktionary do this?
                        , ((French, English), "French")
-                       , ((Russian, Russian), "Русский")
-                       , ((Russian, English), "Russian")
+                       , ((Spanish, English), "Spanish")
+                       , ((Russian, Russian), "Русский") -- untested
+                       , ((Russian, English), "Russian") -- untested
                        ]
 
 findTextNode :: Cursor -> Maybe T.Text
@@ -106,6 +108,10 @@ getSectionTitle cursor = let headline = cursor $// TXC.attributeIs "class" "mw-h
                                                >=> TXC.child
                                                >=> TXC.content
                          in T.unpack <$> M.listToMaybe headline
+
+prompt :: IO String
+prompt = do putStrLn "Enter a word: "
+            getLine
 
 main :: IO ()
 main = do
