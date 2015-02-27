@@ -25,9 +25,10 @@ showPartOfSpeech :: (T.Text, [T.Text]) -> IO ()
 showPartOfSpeech (pos, ds) = do TI.putStrLn pos
                                 mapM_ TI.putStrLn ds
 
-showDefinition :: Definition -> IO ()
-showDefinition def = let ps = partOfSpeechList def
-                     in mapM_ showPartOfSpeech ps
+prettyPrintDefinition :: Definition -> IO ()
+prettyPrintDefinition def =
+    let ps = partOfSpeechList def
+    in mapM_ showPartOfSpeech ps
 
 data Language = French
               | English
@@ -135,7 +136,7 @@ prompt = do TI.putStrLn "Enter a word: "
             getLine
 
 dictionaryOutput (Left _) = TI.putStrLn "definition not found"
-dictionaryOutput (Right d) = showDefinition d
+dictionaryOutput (Right d) = prettyPrintDefinition d
 
 cursorToDefinition :: Cursor -> Either SomeException Definition
 cursorToDefinition cursor =
@@ -148,9 +149,8 @@ cursorToDefinition cursor =
                          }
 
 main :: IO ()
-main = do
-    word <- N.urlEncode <$> prompt
-    cursorE <- cursorFor $ baseUrl ++ word
-    let cc = cursorToDefinition =<< cursorE
-    dictionaryOutput cc
-    main
+main = do word <- N.urlEncode <$> prompt
+          cursorE <- cursorFor $ baseUrl ++ word
+          let cc = cursorToDefinition =<< cursorE
+          dictionaryOutput cc
+          main
