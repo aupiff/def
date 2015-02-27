@@ -35,20 +35,26 @@ baseUrl :: String
 baseUrl = "http://" ++ langCode destinationLang ++ ".wiktionary.org/w/api.php?action=parse&format=xml&prop=text|revid|displaytitle&callback=?&page="
 
 lookupLang :: Language
-lookupLang = Spanish
+lookupLang = Russian
 
 destinationLang :: Language
-destinationLang = English
+destinationLang = Russian
 
 languageHeading :: T.Text
 languageHeading = MP.findWithDefault "English" (lookupLang, destinationLang) langDict
 
+-- TODO these inconsistancies among various wiktionaries make me think I shoud
+-- look for content of <span> elements within <h2/h1>
 langDict :: MP.Map (Language, Language) T.Text
 langDict = MP.fromList [ ((French, French), "Fran.C3.A7ais") -- why does wiktionary do this?
+                                                             -- ids have to be
+                                                             -- ascii?
                        , ((French, English), "French")
                        , ((Spanish, English), "Spanish")
-                       , ((Russian, Russian), "Русский") -- untested
-                       , ((Russian, English), "Russian") -- untested
+                       , ((Russian, Russian), "Русский") -- ru.wiktionary does this in a strange way.
+                                                         -- uses <h1> tags and
+                                                         -- ids seem meaningless
+                       , ((Russian, English), "Russian")
                        ]
 
 findTextNode :: Cursor -> Maybe T.Text
