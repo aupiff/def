@@ -43,5 +43,3 @@ destinationLang = English
 
 languageHeading :: T.Text
 languageHeading = MP.findWithDefault "English" (lookupLang, destinationLang) langDict
-
-

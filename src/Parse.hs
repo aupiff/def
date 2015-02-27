@@ -16,22 +16,22 @@ import Control.Exception
 import Definition
 import Language
 
-maybeToEither :: forall a a1. a1 -> Maybe a -> Either a1 a
-maybeToEither = flip maybe Right . Left
+listToEither :: a -> [b] -> Either a b
+listToEither exception ls = maybe (Left exception) Right elM
+    where elM = M.listToMaybe ls
 
 cursorFor :: LBS.ByteString -> Either SomeException Cursor
 cursorFor = fmap TXC.fromDocument . TX.parseLBS DD.def
 
-findTextNode :: Cursor -> Maybe T.Text
-findTextNode cursor = M.listToMaybe $ cursor $// textContentAxis
+findTextNode :: Cursor -> Either SomeException T.Text
+findTextNode cursor = listToEither noTextException $ cursor $// textContentAxis
         where textContentAxis = TXC.element "text" >=> TXC.child >=> TXC.content
+              noTextException = toException $ IndexOutOfBounds "no text element found"
 
 wikiContentCursorFor :: Cursor -> Either SomeException Cursor
 wikiContentCursorFor cursor = fmap TXC.fromDocument documentE
-    where noTextException =  toException $ IndexOutOfBounds "no text element found"
-          wrapRoot x = T.append (T.pack "<root>") $ T.append x (T.pack "</root>")
-          textNodeM = wrapRoot <$> findTextNode cursor
-          textNodeE = maybeToEither noTextException textNodeM
+    where wrapRoot x = T.append (T.pack "<root>") $ T.append x (T.pack "</root>")
+          textNodeE = wrapRoot <$> findTextNode cursor
           documentE = TX.parseText DD.def . TL.fromStrict =<< textNodeE
 
 cursorHeadElEquals :: String -> Cursor -> Bool
@@ -69,10 +69,11 @@ getSections xs = let notH3 = not . cursorHeadElEquals "h3"
                                          else (title, definitions) : getSections rest
 
 getSectionTitle :: Cursor -> T.Text
-getSectionTitle cursor = let headline = cursor $// TXC.attributeIs "class" "mw-headline"
-                                               >=> TXC.child
-                                               >=> TXC.content
-                         in M.fromMaybe "Word" $ M.listToMaybe headline
+getSectionTitle cursor =
+    let headline = cursor $// TXC.attributeIs "class" "mw-headline"
+                          >=> TXC.child
+                          >=> TXC.content
+    in M.fromMaybe "Word" $ M.listToMaybe headline
 
 pageToDefinition :: LBS.ByteString -> Either SomeException Definition
 pageToDefinition page =
