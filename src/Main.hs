@@ -109,7 +109,9 @@ definitionContentCursor cursor = takeWhile notH2 afterCursors
           notH2 = not . cursorHeadElEquals "h2"
 
 definitionList :: [Cursor] -> [T.Text]
-definitionList = map formatDefinition . filter (cursorHeadElEquals "li") . concatMap TXC.child . filter (cursorHeadElEquals "ol")
+definitionList =  map formatDefinition . getListElements . getOrderedLists
+    where getOrderedLists = filter (cursorHeadElEquals "ol")
+          getListElements = filter (cursorHeadElEquals "li") . concatMap TXC.child
 
 formatDefinition :: Cursor -> T.Text
 formatDefinition cursor = T.concat $ cursor $// TXC.content
@@ -135,6 +137,7 @@ prompt :: IO String
 prompt = do TI.putStrLn "Enter a word: "
             getLine
 
+dictionaryOutput :: forall t. Either t Definition -> IO ()
 dictionaryOutput (Left _) = TI.putStrLn "definition not found"
 dictionaryOutput (Right d) = prettyPrintDefinition d
 
