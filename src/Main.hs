@@ -10,6 +10,7 @@ import Text.XML.Cursor (Cursor, ($//), (>=>))
 import qualified Text.XML.Cursor as TXC
 import Control.Exception
 import qualified Data.Maybe as M
+import qualified Data.Map as MP
 import Data.Default as DD
 import Control.Applicative ((<$>))
 
@@ -17,11 +18,36 @@ prompt :: IO String
 prompt = do putStrLn "Enter a word: "
             getLine
 
-baseUrl :: String
-baseUrl = "http://en.wiktionary.org/w/api.php?action=parse&format=xml&prop=text|revid|displaytitle&callback=?&page="
+data Language = French
+              | English
+              | Russian
+              | Arabic
+              | German
+              | Mandarin deriving (Ord, Eq)
 
-searchLanguage :: T.Text
-searchLanguage = "French"
+langCode :: Language -> String
+langCode French = "fr"
+langCode English = "en"
+langCode Russian = "ru"
+langCode Arabic = "ar"
+langCode German = "de"
+langCode Mandarin = "zh"
+
+baseUrl :: String
+baseUrl = "http://" ++ langCode destinationLang ++ ".wiktionary.org/w/api.php?action=parse&format=xml&prop=text|revid|displaytitle&callback=?&page="
+
+lookupLang = French
+destinationLang = English
+
+languageHeading :: T.Text
+languageHeading = MP.findWithDefault "English" (lookupLang, destinationLang) langDict
+
+langDict :: MP.Map (Language, Language) T.Text
+langDict = MP.fromList [ ((French, French), "Français")
+                       , ((French, English), "French")
+                       , ((Russian, Russian), "Русский")
+                       , ((Russian, English), "Russian")
+                       ]
 
 findTextNode :: Cursor -> Maybe T.Text
 findTextNode cursor = M.listToMaybe $ cursor $// textContentAxis
@@ -53,7 +79,7 @@ cursorHeadElEquals name cursor = name == elName
 
 definitionContentCursor :: Cursor -> [Cursor]
 definitionContentCursor cursor = takeWhile notH2 afterCursors
-    where afterCursors = cursor $// TXC.attributeIs "id" searchLanguage
+    where afterCursors = cursor $// TXC.attributeIs "id" languageHeading
                                 >=> TXC.parent
                                 >=> TXC.followingSibling
           notH2 = not . cursorHeadElEquals "h2"
@@ -92,3 +118,4 @@ main = do
                 let wordPartSections = getSections defContent
                 return wordPartSections
     print cc
+    main
