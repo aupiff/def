@@ -107,13 +107,13 @@ definitionContentCursor cursor = takeWhile notH2 afterCursors
                                 >=> TXC.followingSibling
           notH2 = not . cursorHeadElEquals "h2"
 
-definitionList :: [Cursor] -> [String]
+definitionList :: [Cursor] -> [T.Text]
 definitionList = map formatDefinition . filter (cursorHeadElEquals "li") . concatMap TXC.child . filter (cursorHeadElEquals "ol")
 
-formatDefinition :: Cursor -> String
-formatDefinition cursor = T.unpack . T.concat $ cursor $// TXC.content
+formatDefinition :: Cursor -> T.Text
+formatDefinition cursor = T.concat $ cursor $// TXC.content
 
-getSections :: [Cursor] -> [(Maybe String, [String])]
+getSections :: [Cursor] -> [(T.Text, [T.Text])]
 getSections [] = []
 getSections xs = let notH3 = not . cursorHeadElEquals "h3"
                      -- TODO this must be made safe
@@ -124,11 +124,11 @@ getSections xs = let notH3 = not . cursorHeadElEquals "h3"
                  in  if null definitions then getSections rest
                                          else (title, definitions) : getSections rest
 
-getSectionTitle :: Cursor -> Maybe String
+getSectionTitle :: Cursor -> T.Text
 getSectionTitle cursor = let headline = cursor $// TXC.attributeIs "class" "mw-headline"
                                                >=> TXC.child
                                                >=> TXC.content
-                         in T.unpack <$> M.listToMaybe headline
+                         in M.fromMaybe "Word" $ M.listToMaybe headline
 
 prompt :: IO String
 prompt = do TI.putStrLn "Enter a word: "
