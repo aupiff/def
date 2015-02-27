@@ -19,5 +19,3 @@ prettyPrintDefinition :: Definition -> IO ()
 prettyPrintDefinition def =
     let ps = partOfSpeechList def
     in mapM_ showPartOfSpeech ps
-
-

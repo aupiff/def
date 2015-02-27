@@ -34,3 +34,14 @@ langDict = MP.fromList [ ((French, French), "Fran.C3.A7ais") -- why does wiktion
                                                          -- ids seem meaningless
                        , ((Russian, English), "Russian")
                        ]
+
+lookupLang :: Language
+lookupLang = French
+
+destinationLang :: Language
+destinationLang = English
+
+languageHeading :: T.Text
+languageHeading = MP.findWithDefault "English" (lookupLang, destinationLang) langDict
+
+
