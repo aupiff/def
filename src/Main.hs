@@ -134,15 +134,23 @@ prompt :: IO String
 prompt = do TI.putStrLn "Enter a word: "
             getLine
 
+dictionaryOutput (Left _) = TI.putStrLn "definition not found"
+dictionaryOutput (Right d) = showDefinition d
+
+cursorToDefinition :: Cursor -> Either SomeException Definition
+cursorToDefinition cursor =
+    do contentCursor <- wikiContentCursorFor cursor
+       let defContent = definitionContentCursor contentCursor
+       let wordPartSections = getSections defContent
+       return Definition { sourceLang = lookupLang
+                         , definitionLang = destinationLang
+                         , partOfSpeechList = wordPartSections
+                         }
+
 main :: IO ()
 main = do
-    userWord <- prompt
-    let word = N.urlEncode userWord
+    word <- N.urlEncode <$> prompt
     cursorE <- cursorFor $ baseUrl ++ word
-    let cc = do cursor <- cursorE
-                contentCursor <- wikiContentCursorFor cursor
-                let defContent = definitionContentCursor contentCursor
-                let wordPartSections = getSections defContent
-                return wordPartSections
-    print cc
+    let cc = cursorToDefinition =<< cursorE
+    dictionaryOutput cc
     main
