@@ -75,13 +75,14 @@ getSectionTitle cursor =
                           >=> TXC.content
     in M.fromMaybe "Word" $ M.listToMaybe headline
 
-pageToDefinition :: LBS.ByteString -> Either SomeException Definition
-pageToDefinition page =
+pageToDefinition :: LBS.ByteString -> T.Text -> Either SomeException Definition
+pageToDefinition page word =
     do cursor <- cursorFor page
        contentCursor <- wikiContentCursorFor cursor
        let defContent = definitionContentCursor contentCursor
        let wordPartSections = getSections defContent
-       return Definition { sourceLang = lookupLang
+       return Definition { word = word
+                         , sourceLang = lookupLang
                          , definitionLang = destinationLang
                          , partOfSpeechList = wordPartSections
                          }

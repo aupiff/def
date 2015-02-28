@@ -2,22 +2,29 @@
 module Definition where
 
 import qualified Data.Text as T
-import qualified Data.Text.IO as TI
 
 import Language
 
 data Definition = Definition
-                  { sourceLang :: Language
+                  { word :: T.Text
+                  , sourceLang :: Language
                   , definitionLang :: Language
                   , partOfSpeechList :: [(T.Text, [T.Text])]
                   }
 
-showPartOfSpeech :: (T.Text, [T.Text]) -> IO ()
-showPartOfSpeech (pos, ds) = do TI.putStrLn ""
-                                TI.putStrLn pos
-                                mapM_ TI.putStrLn ds
+showPartOfSpeech :: (T.Text, [T.Text]) -> T.Text
+showPartOfSpeech (pos, ds) = T.concat [ pos
+                                      , "\n"
+                                      , T.intercalate "\n" ds
+                                      , "\n"
+                                      ]
 
-prettyPrintDefinition :: Definition -> IO ()
+prettyPrintDefinition :: Definition -> T.Text
 prettyPrintDefinition def =
     let ps = partOfSpeechList def
-    in mapM_ showPartOfSpeech ps
+    in T.concat [ "----------------------------\n"
+                , word def
+                , "\n\n"
+                , T.concat $ map showPartOfSpeech ps
+                , "----------------------------"
+                ]
