@@ -13,7 +13,8 @@ data Definition = Definition
                   }
 
 showPartOfSpeech :: (T.Text, [T.Text]) -> IO ()
-showPartOfSpeech (pos, ds) = do TI.putStrLn pos
+showPartOfSpeech (pos, ds) = do TI.putStrLn ""
+                                TI.putStrLn pos
                                 mapM_ TI.putStrLn ds
 
 prettyPrintDefinition :: Definition -> IO ()

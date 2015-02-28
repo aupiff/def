@@ -55,7 +55,7 @@ definitionList =  map formatDefinition . getListElements . getOrderedLists
           getListElements = filter (cursorHeadElEquals "li") . concatMap TXC.child
 
 formatDefinition :: Cursor -> T.Text
-formatDefinition cursor = T.append " * " $ T.concat $ cursor $// TXC.content
+formatDefinition cursor = T.append " * " . T.concat . filter (/= "\n") $ cursor $// TXC.content
 
 getSections :: [Cursor] -> [(T.Text, [T.Text])]
 getSections [] = []
