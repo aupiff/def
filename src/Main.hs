@@ -9,10 +9,6 @@ import qualified Definition
 import qualified Language
 import qualified Parse
 
-prompt :: IO String
-prompt = do putStrLn "Enter a word: "
-            getLine
-
 dictionaryOutput :: forall t. Either t Definition.Definition -> IO ()
 dictionaryOutput (Left _) = putStrLn "definition not found"
 dictionaryOutput (Right d) = Definition.prettyPrintDefinition d
@@ -22,7 +18,8 @@ baseUrl = "http://" ++ cname ++ ".wiktionary.org/w/api.php?action=parse&format=x
     where cname = Language.langCode Language.destinationLang
 
 main :: IO ()
-main = do word <- N.urlEncode <$> prompt
+main = do putStrLn "-----------------------"
+          word <- N.urlEncode <$> getLine
           page <- NHC.simpleHttp $ baseUrl ++ word
           let cc = Parse.pageToDefinition page
           dictionaryOutput cc
