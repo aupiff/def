@@ -22,3 +22,24 @@ Available language codes:
 
 
 saves all successfully found definitions to `dict.log` file for future reference.
+
+example output:
+```
+
+----------------------------
+crasse
+
+Adjective
+ * crass
+ * (of humor) dirty, filthy
+Noun
+ * filth, muck
+ * (especially, dirty) froth, foam
+Verb
+ * first-person singular present indicative of crasser
+ * third-person singular present indicative of crasser
+ * first-person singular present subjunctive of crasser
+ * first-person singular present subjunctive of crasser
+ * second-person singular imperative of crasser
+----------------------------
+```

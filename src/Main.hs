@@ -10,6 +10,7 @@ import qualified Data.Map as MP
 
 import qualified Definition
 import qualified Language
+import Language (Language)
 import qualified Parse
 
 dictionaryOutput :: forall t. Either t Definition.Definition -> IO ()
@@ -18,7 +19,7 @@ dictionaryOutput (Right d) = let definition = Definition.prettyPrintDefinition d
                              in do TI.putStrLn definition
                                    TI.appendFile "dict.log" definition
 
-lookupLoop :: Language.Language -> Language.Language -> IO ()
+lookupLoop :: Language -> Language -> IO ()
 lookupLoop sourceLang destLang =
     do word <- getLine
        let cname = Language.langCode destLang
@@ -28,10 +29,16 @@ lookupLoop sourceLang destLang =
        dictionaryOutput cc
        lookupLoop sourceLang destLang
 
+parseArgs :: [String] -> Maybe (Language, Language)
+parseArgs args = if length args == 2
+                    then do sourceLang <- MP.lookup (head args) Language.cmdLang
+                            destLang <- MP.lookup (args !! 1) Language.cmdLang
+                            return (sourceLang, destLang)
+                    else Nothing
+
 main :: IO ()
 main = do args <- System.Environment.getArgs
-          if length args == 2
-            then let sourceLang = MP.findWithDefault Language.English (args !! 0) Language.cmdLang
-                     destLang = MP.findWithDefault Language.English (args !! 1) Language.cmdLang
-                 in lookupLoop sourceLang destLang
-            else print "bad args"
+          let langPairM = parseArgs args
+          case langPairM of
+            Just (sourceLang, destLang) -> lookupLoop sourceLang destLang
+            _                           -> print "bad args"
