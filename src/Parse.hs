@@ -42,9 +42,9 @@ cursorHeadElEquals name cursor = name == elName
                        NodeElement el -> T.unpack . nameLocalName $ elementName el
                        _              -> ""
 
-definitionContentCursor :: Cursor -> [Cursor]
-definitionContentCursor cursor = takeWhile notH2 afterCursors
-    where afterCursors = cursor $// TXC.attributeIs "id" languageHeading
+definitionContentCursor :: Language -> Language -> Cursor -> [Cursor]
+definitionContentCursor sourceLang destLang cursor = takeWhile notH2 afterCursors
+    where afterCursors = cursor $// TXC.attributeIs "id" (Language.heading sourceLang destLang)
                                 >=> TXC.parent
                                 >=> TXC.followingSibling
           notH2 = not . cursorHeadElEquals "h2"
@@ -75,14 +75,14 @@ getSectionTitle cursor =
                           >=> TXC.content
     in M.fromMaybe "Word" $ M.listToMaybe headline
 
-pageToDefinition :: LBS.ByteString -> T.Text -> Either SomeException Definition
-pageToDefinition page word =
+pageToDefinition :: LBS.ByteString -> T.Text -> Language -> Language -> Either SomeException Definition
+pageToDefinition page word sourceLang destLang =
     do cursor <- cursorFor page
        contentCursor <- wikiContentCursorFor cursor
-       let defContent = definitionContentCursor contentCursor
+       let defContent = definitionContentCursor sourceLang destLang contentCursor
        let wordPartSections = getSections defContent
        return Definition { word = word
-                         , sourceLang = lookupLang
-                         , definitionLang = destinationLang
+                         , sourceLang =  sourceLang
+                         , definitionLang = destLang
                          , partOfSpeechList = wordPartSections
                          }
