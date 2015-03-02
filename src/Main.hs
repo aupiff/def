@@ -30,15 +30,13 @@ lookupLoop sourceLang destLang =
        lookupLoop sourceLang destLang
 
 parseArgs :: [String] -> Maybe (Language, Language)
-parseArgs args = if length args == 2
-                    then do sourceLang <- MP.lookup (head args) Language.cmdLang
-                            destLang <- MP.lookup (args !! 1) Language.cmdLang
-                            return (sourceLang, destLang)
-                    else Nothing
+parseArgs args = do if length args == 2 then Just () else Nothing
+                    sourceLang <- MP.lookup (head args) Language.cmdLang
+                    destLang <- MP.lookup (args !! 1) Language.cmdLang
+                    return (sourceLang, destLang)
 
 main :: IO ()
 main = do args <- System.Environment.getArgs
-          let langPairM = parseArgs args
-          case langPairM of
+          case parseArgs args of
             Just (sourceLang, destLang) -> lookupLoop sourceLang destLang
             _                           -> print "bad args"
