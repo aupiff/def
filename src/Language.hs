@@ -21,13 +21,12 @@ langCode Arabic = "ar"
 langCode German = "de"
 langCode Mandarin = "zh"
 
-cmdLang :: MP.Map String Language
-cmdLang = MP.fromList [ ("fr", French)
-                      , ("ru", Russian)
-                      , ("en", English)
-                      , ("es", Spanish)
-                      ]
-
+cmdLangDict :: MP.Map String Language
+cmdLangDict = MP.fromList [ ("fr", French)
+                          , ("ru", Russian)
+                          , ("en", English)
+                          , ("es", Spanish)
+                          ]
 
 -- TODO these inconsistancies among various wiktionaries make me think I shoud
 -- look for content of <span> elements within <h2/h1>
@@ -44,5 +43,8 @@ langDict = MP.fromList [ ((French, French), "Fran.C3.A7ais") -- why does wiktion
                        ]
 
 heading :: Language -> Language -> T.Text
-heading sourceLang destLang =
-    MP.findWithDefault "English" (sourceLang, destLang) langDict
+heading srcLang destLang =
+    MP.findWithDefault "English" (srcLang, destLang) langDict
+
+langCodeLookup :: String -> Maybe Language
+langCodeLookup str = MP.lookup str cmdLangDict

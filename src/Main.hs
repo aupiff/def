@@ -6,7 +6,6 @@ import qualified Network.HTTP.Conduit as NHC
 import qualified Data.Text as T
 import qualified Data.Text.IO as TI
 import qualified System.Environment
-import qualified Data.Map as MP
 
 import qualified Definition
 import qualified Language
@@ -31,12 +30,12 @@ lookupLoop sourceLang destLang =
 
 parseArgs :: [String] -> Maybe (Language, Language)
 parseArgs args = do if length args == 2 then Just () else Nothing
-                    sourceLang <- MP.lookup (head args) Language.cmdLang
-                    destLang <- MP.lookup (args !! 1) Language.cmdLang
+                    sourceLang <- Language.langCodeLookup $ head args
+                    destLang <- Language.langCodeLookup $ args !! 1
                     return (sourceLang, destLang)
 
 main :: IO ()
 main = do args <- System.Environment.getArgs
           case parseArgs args of
-            Just (sourceLang, destLang) -> lookupLoop sourceLang destLang
-            _                           -> print "bad args"
+            Just (srcLang, destLang) -> lookupLoop srcLang destLang
+            _                        -> putStrLn "bad args"
