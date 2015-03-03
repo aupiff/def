@@ -6,7 +6,7 @@ import qualified Network.HTTP.Conduit as NHC
 import qualified Data.Text as T
 import qualified Data.Text.IO as TI
 import qualified System.Environment
-import Control.Applicative ((<$>), (*>), (<*>), liftA2)
+import Control.Applicative ((*>), liftA2)
 
 import qualified Definition
 import qualified Language
