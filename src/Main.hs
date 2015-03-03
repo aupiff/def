@@ -20,13 +20,14 @@ dictionaryOutput (Right d) = let definition = Definition.prettyPrintDefinition d
 
 lookupLoop :: Language -> Language -> IO ()
 lookupLoop sourceLang destLang =
-    do word <- getLine
-       let cname = Language.langCode destLang
-       let baseUrl = "http://" ++ cname ++ ".wiktionary.org/w/api.php?action=parse&format=xml&prop=text|revid|displaytitle&callback=?&page="
-       page <- NHC.simpleHttp $ baseUrl ++ N.urlEncode word
-       let cc = Parse.pageToDefinition page (T.pack word) sourceLang destLang
-       dictionaryOutput cc
-       lookupLoop sourceLang destLang
+    let cname = Language.langCode destLang
+        baseUrl = "http://" ++ cname ++ ".wiktionary.org/w/api.php?action=parse&format=xml&prop=text|revid|displaytitle&callback=?&page="
+        loop = do word <- getLine
+                  page <- NHC.simpleHttp $ baseUrl ++ N.urlEncode word
+                  let wordDef = Parse.pageToDefinition page (T.pack word) sourceLang destLang
+                  dictionaryOutput wordDef
+                  loop
+    in loop
 
 parseArgs :: [String] -> Maybe (Language, Language)
 parseArgs args = do if length args == 2 then Just () else Nothing
