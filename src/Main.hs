@@ -6,6 +6,7 @@ import qualified Network.HTTP.Conduit as NHC
 import qualified Data.Text as T
 import qualified Data.Text.IO as TI
 import qualified System.Environment
+import Control.Applicative ((<$>), (*>), (<*>), liftA2)
 
 import qualified Definition
 import qualified Language
@@ -30,10 +31,10 @@ lookupLoop sourceLang destLang =
     in loop
 
 parseArgs :: [String] -> Maybe (Language, Language)
-parseArgs args = do if length args == 2 then Just () else Nothing
-                    sourceLang <- Language.langCodeLookup $ head args
-                    destLang <- Language.langCodeLookup $ args !! 1
-                    return (sourceLang, destLang)
+parseArgs args = argLenM *> liftA2 (,) sourceLang destLang
+        where argLenM = if length args == 2 then Just () else Nothing
+              sourceLang = Language.langCodeLookup $ head args
+              destLang = Language.langCodeLookup $ args !! 1
 
 main :: IO ()
 main = do args <- System.Environment.getArgs
