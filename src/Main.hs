@@ -1,16 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ExistentialQuantification #-}
 
-import qualified Network.HTTP.Base as N
+import qualified Network.HTTP.Base    as N
 import qualified Network.HTTP.Conduit as NHC
-import qualified Data.Text as T
-import qualified Data.Text.IO as TI
+import qualified Data.Text            as T
+import qualified Data.Text.IO         as TI
 import qualified System.Environment
-import Control.Applicative ((*>), liftA2)
+import           Control.Applicative (liftA2)
 
 import qualified Definition
 import qualified Language
-import Language (Language)
+import           Language (Language)
 import qualified Parse
 
 dictionaryOutput :: forall t. Either t Definition.Definition -> IO ()
@@ -23,7 +23,7 @@ lookupLoop :: Language -> Language -> IO ()
 lookupLoop sourceLang destLang =
     let cname = Language.langCode destLang
         baseUrl = "http://" ++ cname ++ ".wiktionary.org/w/api.php?action=parse&format=xml&prop=text|revid|displaytitle&callback=?&page="
-        loop = do word <- getLine
+        loop = do word <- fmap (\x -> if x == ' ' then '_' else x) <$> getLine
                   page <- NHC.simpleHttp $ baseUrl ++ N.urlEncode word
                   let wordDef = Parse.pageToDefinition page (T.pack word) sourceLang destLang
                   dictionaryOutput wordDef
