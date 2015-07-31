@@ -11,7 +11,7 @@ display a nice, pretty-printed definition.
 The program takes command line arguments `source-lang definition-lang`
 
 ```
-cabal run -- fr en
+stack exec -- def fr en
 ```
 
 Available language codes:
